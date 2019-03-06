@@ -3,7 +3,9 @@
 
 /*************************** DECLARE YOUR HELPER FUNCTIONS HERE ************************/
 /* Check if putting queen on (row, col) is valid. */
-bool isValid(const std::vector<unsigned int> &queen_col_pos, const unsigned int &row, const unsigned int &col) {
+bool isValid(const std::vector<unsigned int> &queen_col_pos, 
+			 const unsigned int &row, 
+			 const unsigned int &col) {
 	for (unsigned int i = 0; i < row; i++) {
 		if (queen_col_pos[i] == col || abs(queen_col_pos[i] - col) == (row - i)) {
 			return false;
@@ -13,7 +15,10 @@ bool isValid(const std::vector<unsigned int> &queen_col_pos, const unsigned int 
 }
 
 /* The actual sequential solver */
-void actual_seq_solver(std::vector<std::vector<unsigned int> >& all_solns, std::vector<unsigned int> &curr_res, unsigned int row, const unsigned int &n) {
+void actual_seq_solver(std::vector<std::vector<unsigned int>> &all_solns, 
+					   std::vector<unsigned int> &curr_res, 
+					   unsigned int row, 
+					   const unsigned int &n) {
 	/* Base case */
 	if (row == n) {
 		all_solns.push_back(curr_res);
@@ -29,8 +34,30 @@ void actual_seq_solver(std::vector<std::vector<unsigned int> >& all_solns, std::
 	}
 }
 
+/* Calculate the next partial solution with k queens */
+void next_partial_solution(std::queue<std::vector<unsigned int>> &partial_solutions, 
+						   std::vector<unsigned int> &curr_res, 
+						   unsigned int row,
+						   const unsigned int &n, 
+						   const unsigned int &k) {
+	
+	/* Base case */
+	if (row == k) {
+		partial_solutions.push(curr_res);
+		return;
+	}
+
+	for (unsigned int col = 0; col < n; col++) {
+		if (isValid(curr_res, row, col)) {
+			curr_res[row] = col;
+			next_partial_solution(partial_solutions, curr_res, row + 1, n, k);
+			curr_res[row] = 0;
+		}
+	}
+}
+
 /*************************** solver.h functions ************************/
-void seq_solver(unsigned int n, std::vector<std::vector<unsigned int> >& all_solns) {
+void seq_solver(unsigned int n, std::vector<std::vector<unsigned int>> &all_solns) {
 
 	// DONE: Implement this function
 
@@ -46,9 +73,9 @@ void seq_solver(unsigned int n, std::vector<std::vector<unsigned int> >& all_sol
 
 
 
-void nqueen_master(	unsigned int n,
-					unsigned int k,
-					std::vector<std::vector<unsigned int> >& all_solns) {
+void nqueen_master(unsigned int n,
+				   unsigned int k,
+				   std::vector<std::vector<unsigned int> >& all_solns) {
 
 
 
@@ -85,10 +112,31 @@ void nqueen_master(	unsigned int n,
 	 *
 	 */
 
+	int num_procs;
+	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
+	/* Create current result */
+	std::vector<unsigned int> curr_res (n, 0);
+	std::queue<std::vector<unsigned int>> partial_solutions;
+	std::vector<unsigned int> res_sending (n, 0);
 
+	/******************* STEP 1: Send one partial solution to each worker ********************/
+	/* Find next partial solution for each worker, send them to the workers */
+	for (int w = 0; w < num_procs; w++) {
+		/* Find next partial solution */
+		next_partial_solution(partial_solutions, curr_res, row, n, k);
 
+		/* Send the solution to the worker */
+		res_sending = partial_solutions.pop();
+		MPI_Send(&n, 1, MPI_INT, w, 111, MPI_COMM_WORLD);
+		MPI_Send(&res_sending[0], n, MPI_INT, w, 111, MPI_COMM_WORLD);
+	}
 
+	/******************* STEP 2: Send partial solutions to workers as they respond ********************/
+	while (1) {
+		MPI_Recv(&recv_size, 1, MPI_INT, MPI_ANY_SOURCE, 110, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_
+	}
 }
 
 void nqueen_worker(	unsigned int n,
@@ -125,10 +173,3 @@ void nqueen_worker(	unsigned int n,
 
 
 /*************************** DEFINE YOUR HELPER FUNCTIONS HERE ************************/
-
-
-
-
-
-
-
