@@ -2,20 +2,43 @@
 
 
 /*************************** DECLARE YOUR HELPER FUNCTIONS HERE ************************/
+/* Check if putting queen on (row, col) is valid. */
+bool isValid(const std::vector<unsigned int> &queen_col_pos, const unsigned int &row, const unsigned int &col) {
+	for (unsigned int i = 0; i < row; i++) {
+		if (queen_col_pos[i] == col || abs(queen_col_pos[i] - col) == (row - i)) {
+			return false;
+		}
+	}
+	return true;
+}
 
+/* The actual sequential solver */
+void actual_seq_solver(std::vector<std::vector<unsigned int> >& all_solns, std::vector<unsigned int> &curr_res, unsigned int row, const unsigned int &n) {
+	/* Base case */
+	if (row == n) {
+		all_solns.push_back(curr_res);
+		return;
+	}
 
-
-
+	for (unsigned int col = 0; col < n; col++) {
+		if (isValid(curr_res, row, col)) {
+			curr_res[row] = col;
+			actual_seq_solver(all_solns, curr_res, row + 1, n);
+			curr_res[row] = 0;
+		}
+	}
+}
 
 /*************************** solver.h functions ************************/
-
-
 void seq_solver(unsigned int n, std::vector<std::vector<unsigned int> >& all_solns) {
 
-	// TODO: Implement this function
+	// DONE: Implement this function
 
+	/* Create current result */
+	std::vector<unsigned int> curr_res (n, 0);
 
-
+	/* Start actual solver */
+	actual_seq_solver(all_solns, curr_res, 0, n);
 }
 
 
