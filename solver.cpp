@@ -42,6 +42,15 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 						   const unsigned int &k,
 						   bool &had_sol) {
 
+	/* Handle edge case of k = 0 */
+	/*if (k == 0 && had_sol) {
+		return false;
+	} else if (k == 0) {
+		partial_solution = curr_res;
+		had_sol = true;
+		return true;
+	}*/
+
 	/* Base case */
 	if (row == k) {
 		partial_solution = curr_res;
@@ -77,6 +86,13 @@ void worker_solver(std::vector<unsigned int> &curr_res,
 				   const unsigned int &n) {
 	/* Base case: Full solution found, send it to Master */
 	if (row == n) {
+		/* Debugging */
+		std::cout << "Solution calculated (worker): " << std::endl;
+		for (unsigned int i = 0; i < n; i++) {
+			std::cout << curr_res[i] << " ";
+		}
+		std::cout << std::endl;
+
 		MPI_Send(&curr_res[0], n, MPI_INT, 0, 101, MPI_COMM_WORLD);
 		return;
 	}
@@ -121,7 +137,7 @@ void nqueen_master(unsigned int n,
 	std::vector<unsigned int> curr_res (n, 0);
 
 	/* Next partial solution */
-	std::vector<unsigned int> partial_solution (k, 0);
+	std::vector<unsigned int> partial_solution (n, 0);
 
 	/* Sending buffer*/
 	std::vector<unsigned int> res_send (n, 0);
@@ -140,6 +156,8 @@ void nqueen_master(unsigned int n,
 	for (int w = 1; w < num_procs; w++) {
 		/* Find next partial solution */
 		if (next_partial_solution(partial_solution, curr_res, 0, n, k, had_sol)) {
+			/* Debugging */
+			std::cout << "Solution sent to worker" << w << ": " << partial_solution[0] << partial_solution[1] << std::endl;
 			MPI_Send(&partial_solution[0], n, MPI_INT, w, 100, MPI_COMM_WORLD);
 		} else {
 			found_all_partial_sol = true; /* All the partial solutions have been found */
@@ -149,7 +167,7 @@ void nqueen_master(unsigned int n,
 
 	/******************* STEP 2: Send partial solutions to workers as they respond ********************/
 	while (!found_all_partial_sol && !all_work_done) {
-		/* Unblocking receive data from workers */
+		/* Non-blocking receive data from workers */
 		MPI_Irecv(&res_recv[0], n, MPI_INT, MPI_ANY_SOURCE, 101, MPI_COMM_WORLD, &req);
 		
 		/* Find next partial solution */
@@ -163,7 +181,14 @@ void nqueen_master(unsigned int n,
 		worker = stat.MPI_SOURCE;
 
 		/* The worker has found a solution, need the while loop to avoid skipping any partial solution */
-		while (res_recv[0] != n) {
+		while (res_recv[0] != n+1) {
+			/* Debugging */
+			std::cout << "Solution received (master): " << std::endl;
+			for (unsigned int i = 0; i < n; i++) {
+				std::cout << res_recv[i] << " ";
+			}
+			std::cout << std::endl;
+
 			/* Store the result */
 			all_solns.push_back(res_recv);
 
@@ -177,6 +202,8 @@ void nqueen_master(unsigned int n,
 		isWorking[worker-1] = false;
 		/* Send a new partial solution if exist. If all partial solutions are found, check if all workers are done. */
 		if (!found_all_partial_sol) {
+			/* Debugging */
+			std::cout << "Solution sent to worker" << worker << ": " << partial_solution[0] << partial_solution[1] << std::endl;
 			MPI_Send(&partial_solution[0], n, MPI_INT, worker, 100, MPI_COMM_WORLD);
 			isWorking[worker-1] = true;
 		} else {
@@ -210,6 +237,13 @@ void nqueen_worker(	unsigned int n,
 		/* Waiting for the next message from master */
 		MPI_Recv(&res_recv[0], n, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
+		/* Debugging */
+		std::cout << "Solution received (worker" << proc_id << "): " << std::endl;
+		for (unsigned int i = 0; i < n; i++) {
+			std::cout << res_recv[i] << " ";
+		}
+		std::cout << std::endl;
+
 		/* Termination message */
 		if (res_recv[k] == 100) {
 			return;
@@ -219,11 +253,7 @@ void nqueen_worker(	unsigned int n,
 		worker_solver(res_recv, k, n);
 
 		/* Send the finish message (set the first element to n, which is impossible for a solution) */
-		res_recv[0] = n;
+		res_recv[0] = n+1;
 		MPI_Send(&res_recv[0], n, MPI_INT, 0, 101, MPI_COMM_WORLD);
 	}
 }
-
-
-
-/*************************** DEFINE YOUR HELPER FUNCTIONS HERE ************************/
