@@ -130,7 +130,7 @@ void nqueen_master(unsigned int n,
 	/* Find next partial solution for each worker, send them to the workers */
 	for (int w = 0; w < num_procs; w++) {
 		/* Find next partial solution */
-		next_partial_solution(partial_solutions, curr_res, row, n, k);
+		next_partial_solution(partial_solutions, curr_res, 0, n, k);
 
 		/* Send the solution to the worker */
 		res_sending = partial_solutions.pop();
