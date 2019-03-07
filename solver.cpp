@@ -39,19 +39,21 @@ bool next_partial_solution(std::queue<std::vector<unsigned int>> &partial_soluti
 						   std::vector<unsigned int> &curr_res, 
 						   unsigned int row,
 						   const unsigned int &n, 
-						   const unsigned int &k) {
+						   const unsigned int &k,
+						   const bool & had_sol) {
 	
 	/* Base case */
 	if (row == k) {
 		partial_solutions.push(curr_res);
+		had_sol = true;
 		return true;
 	}
 
 	bool found_sol = false;
-	for (unsigned int col = curr_res[row]; col < n; col++) {
+	for (unsigned int col = row == k - 1 && had_sol ? curr_res[row] + 1 : curr_res[row]; col < n; col++) {
 		if (isValid(curr_res, row, col)) {
 			curr_res[row] = col;
-			found_sol = next_partial_solution(partial_solutions, curr_res, row + 1, n, k);
+			found_sol = next_partial_solution(partial_solutions, curr_res, row + 1, n, k, had_sol);
 			if (found_sol) {
 				return true;
 			}
@@ -120,27 +122,29 @@ void nqueen_master(unsigned int n,
 
 	int num_procs;
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	MPI_Status stat;
 
 	/* Create current result */
 	std::vector<unsigned int> curr_res (n, 0);
 	std::queue<std::vector<unsigned int>> partial_solutions;
-	std::vector<unsigned int> res_sending (n, 0);
+	std::vector<unsigned int> res_send (n, 0);
+	std::vector<unsigned int> res_recv (n, 0);
+	bool had_sol = false;
 
 	/******************* STEP 1: Send one partial solution to each worker ********************/
 	/* Find next partial solution for each worker, send them to the workers */
 	for (int w = 0; w < num_procs; w++) {
 		/* Find next partial solution */
-		next_partial_solution(partial_solutions, curr_res, 0, n, k);
+		next_partial_solution(partial_solutions, curr_res, 0, n, k, had_sol);
 
 		/* Send the solution to the worker */
-		res_sending = partial_solutions.pop();
-		MPI_Send(&n, 1, MPI_INT, w, 111, MPI_COMM_WORLD);
-		MPI_Send(&res_sending[0], n, MPI_INT, w, 111, MPI_COMM_WORLD);
+		res_send = partial_solutions.pop();
+		MPI_Send(&res_send[0], n, MPI_INT, w, 111, MPI_COMM_WORLD);
 	}
 
 	/******************* STEP 2: Send partial solutions to workers as they respond ********************/
 	while (1) {
-		MPI_Recv(&recv_size, 1, MPI_INT, MPI_ANY_SOURCE, 110, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&recv_size, 1, MPI_INT, MPI_ANY_SOURCE, 110, MPI_COMM_WORLD, &stat);
 		MPI_
 	}
 }
