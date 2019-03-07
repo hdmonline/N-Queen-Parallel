@@ -35,7 +35,7 @@ void actual_seq_solver(std::vector<std::vector<unsigned int>> &all_solns,
 }
 
 /* Calculate the next partial solution with k queens */
-void next_partial_solution(std::queue<std::vector<unsigned int>> &partial_solutions, 
+bool next_partial_solution(std::queue<std::vector<unsigned int>> &partial_solutions, 
 						   std::vector<unsigned int> &curr_res, 
 						   unsigned int row,
 						   const unsigned int &n, 
@@ -44,16 +44,22 @@ void next_partial_solution(std::queue<std::vector<unsigned int>> &partial_soluti
 	/* Base case */
 	if (row == k) {
 		partial_solutions.push(curr_res);
-		return;
+		return true;
 	}
 
-	for (unsigned int col = 0; col < n; col++) {
+	bool found_sol = false;
+	for (unsigned int col = curr_res[row]; col < n; col++) {
 		if (isValid(curr_res, row, col)) {
 			curr_res[row] = col;
-			next_partial_solution(partial_solutions, curr_res, row + 1, n, k);
+			found_sol = next_partial_solution(partial_solutions, curr_res, row + 1, n, k);
+			if (found_sol) {
+				return true;
+			}
 			curr_res[row] = 0;
 		}
 	}
+
+	return false;
 }
 
 /*************************** solver.h functions ************************/
