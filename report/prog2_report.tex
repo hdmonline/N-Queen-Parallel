@@ -7,9 +7,8 @@
 \usepackage{listings}
 \usepackage[utf8]{inputenc}
 \usepackage[vlined, ruled, boxed]{algorithm2e}
-\title{CSE6220 High Performance Computing Spring 2019 \\
-	Homework 2}
-\author{Chong Ye (cye38)}
+\title{Programming Assignment 2}
+\author{Han Dongmin, Yuanlai Zhou, Chong Ye}
 
 \begin{document}
 
@@ -19,10 +18,10 @@
 For question 3, I discussed with Dongmin Han and Yuanlai Zhou and we worked together to figure out the parallel solution. 
 
 
-\section{Solutions}
+\section{Algorithm}
 \begin{enumerate}
 \item
-The parallel prefix algorithm can be used if the binary operation is associative.
+\textbf{seq\_solve}r
 \begin{enumerate}
 	\item $ op(a,b)=2a+b $ \\
 	since \[ op(op(a,b),c)=2(2a+b)+c=4a+2b+c \]
@@ -38,104 +37,27 @@ The parallel prefix algorithm can be used if the binary operation is associative
 \end{enumerate}
 
 \setlength{\parindent}{1em}
-\item The polynomial is:
-\[ P(x)=a_{n-1}*x^{n-1}+a_{n-2}*x^{n-2}+......+a_2x^2+a_1x+a_0 \]
-Using the Horner's law, the polynomial could be evaluated as:
-\[ ((......(((a_{n-1}*x+a_{n-2})*x+a_{n-3})*x+a_{n-4})......)*x+a_1)*x+a_0 \]
-Define:
-\[ P_0=a_{n-1} \]
-\[ P_i=P_{i-1}*x+a_{n-i-1} \]
-Then
-\[ P_{n-1}=a_{n-1}*x^{n-1}+a_{n-2}*x^{n-2}+......+a_2x^2+a_1x+a_0 \]
-We have
-\[ 
-\begin{bmatrix}
-P_i &1
-\end{bmatrix} 
-=
-\begin{bmatrix}
-P_{i-1} &1
-\end{bmatrix}
-\begin{bmatrix}
-x &0\\
-a_{n-i-1} &1
-\end{bmatrix}\]
-We can use parallel prefix algorithm and use multiplication as the operation.
+\item \textbf{nqueen\_master}
+
 
 \vspace{3mm}
 
-\item $ x_0=a_0 $
-\[ x_1=\frac{a_1}{a_0} \]
-\[ x_2=\frac{a_0a_2}{a_1} \]
-\[ x_3=\frac{a_1a_3}{a_0a_2} \]
-\[ x_4=\frac{a_0a_2a_4}{a_1a_3} \]
-thus we need to know $ a_0, a_0a_2, a_0a_2a_4...a_{2k},... $ and $ a_1, a_1a_3, a_1a_3a_5...a_{2k-1},... $. \\
-We can implement parallel prefix algorithm with the multiplication as the operation. However, we do not need to do the first multiplication with adjacent processes. The algorithm is shown as below.
+\item \textbf{nqueen\_worker} \\
 
-\begin{algorithm}[H]
-	\caption{Parallel Prefix Algorithm}
-	total\_multiplication $ \gets $ prefix\_multiplication $ \gets $ local\_number\\
-	\For{$ j=1 $ to $ d-1 $}
-	{
-		$ rank' \gets rank\ XOR\ 2^{j} $\\
-		send $ total\_multiplication $ to $ rank' $\\
-		receive $ received\_multiplication $ from $ rank' $\\
-		$ total\_multiplication \gets total\_multiplication \times received\_multiplication $\\
-		\If{$ rank > rank' $}{
-			$ prefix\_multiplication \gets prefix\_multiplication \times reveived\_multiplication $
-		}
-	}
-	\If{$ rank < p - 1 $}{
-		$ rank' \gets rank + 1 $\\
-		send $ prefix\_multiplication $ to $ rank' $\\
-	}
-	\uIf{$ rank > 0 $}{
-		$ rank'' \gets rank - 1 $\\
-		receive $ received\_multiplication $ from $ rank'' $\\
-		$ x_i = \frac{prefix\_multiplication}{received\_multiplication} $
-	}
-\end{algorithm}
-After calculating the $ a_0, a_0a_2, a_0a_2a_4...a_{2k},... $ and $ a_1, a_1a_3, a_1a_3a_5...a_{2k-1},... $, then we can compute $ x_0, x_1, x_2,......,x_n $ shown in the above algorithm 1.
+\end{enumerate}
 
-\item To assign the rank to element $ A[i] $ with label $ L[i] $, we need to know the number of elements whose label is smaller than $ L[i] $ and the elements whose label is $ L[i] $ however have lower index than $ A[i] $. \\
-We can make an matrix $ B[i][j] $ with size $ n*k $. for element $ A[i] $, if  $ L[i]=m $, we let $ B[i][m]=1 $, otherwise, mark $ B[i][m]=0 $. Implement prefix sum algorithm on vectors $ B[i][:] $ with addition as the operation. Thus we have $ n $ vectors: 
-\[ B[1], B[2],B[3],......,B[n]  \]
-Let $ P[i] $ be the prefix sum and $ S $ be the total sum. Thus we have:
-\[ P[i]=\sum_{j=1}^{i}B[j] \]
-\[ T=\sum_{j=1}^{n}B[j] \]
-The rank for element $ A[i] $ can be calculated as:
-\[ R[i]=P[i][L[i]]+\sum_{j=1}^{L[i]-1}T[j] \] where
-$ P[i][L[i]] $ is the $ L[i] $th element in vector $ P $, which is the number of elements with label $ L[i] $ but have lower index than  $ A[i] $. $ \sum_{j=1}^{L[i]-1}T[j] $ is the sum of the first $ L[i]-1 $th elements of vector $ T $, indicating the number of elements with smaller labels than  $ A[i] $.\\
-Computing time:
+\section{optimization}
+
+\section{Implementation and Analysis}
 \begin{enumerate}
-	\item Time used for computing vector B: $ O(n/p) $
-	\item Time used for prefix sum algorithm:
-	 \[ Computaion time = O(\frac{n}{p}+\log p) \] 
-	 \[ Communication time = O((\tau+\mu)log p) \]
-	\item Time used for calculating ranks: $ O(n/p) $
-\end{enumerate}
-Therefore, the total running time is:
-\[ O(\frac{n}{p}+(\tau+\mu)\log p) \]
-
-
-\item To calculate the distance to the nearest 1 to the left side for each entry of $ A $ that is 0, we need to know the index of entry 0 and the index of the nearest 0, then the distance is the subtraction of the indexes. \\
-Thus we could make another array $ B $ corresponding with array $ A $. 
-\begin{enumerate}
-	\item Make an array B with length n and element $ B[i]=i*A[i] $
-	\item Implement parallel prefix algorithm with max operation. Prefix maximum $ P[i] $ represents the maximum element in array $ B $ prior to element $ B[i] $ (including $ B[i] $).
-	\item Calculate the distance for the entry $ A[i] $ that is 0 as $ i-P[i] $.
-\end{enumerate}
-Running time:
-\begin{enumerate}
-	\item $ O(\frac{n}{p}) $
-	\item 	 $Computaion time = O(\frac{n}{p}+\log p) $ \\
-	$ Communication time = O((\tau+\mu)log p) $
-	\item $ O(n/p) $
-\end{enumerate}
-Therefore, the total running time is:
-\[ O(\frac{n}{p}+(\tau+\mu)\log p) \]
-
+\item vary n
+choose  k $ \geq 8 $
+\item vary p
+n not too low or too high
+\item vary k
+$ n>10 $
 \end{enumerate}
 
+\section{Results and Conclustion}
      
 \end{document}
