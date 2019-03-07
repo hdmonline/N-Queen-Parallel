@@ -91,7 +91,7 @@ void nqueen_master(unsigned int n,
 				   std::vector<std::vector<unsigned int> >& all_solns) {
 
 	/* Handle edge case of n = k */
-	if (n == k) {
+	if (n <= k) {
 		seq_solver(n, all_solns);
 		return;
 	}
@@ -163,7 +163,7 @@ void nqueen_master(unsigned int n,
 	}
 
 	/********************** STEP 3: Terminate **************************/
-	/* Send termination signal to all workers */
+	/* Send termination message to all workers */
 	for (int w = 1; w < num_procs; w++) {
 		res_send[k] = 100;
 		MPI_Send(&res_send[0], n, MPI_INT, w, 100, MPI_COMM_WORLD);
@@ -173,7 +173,10 @@ void nqueen_master(unsigned int n,
 void nqueen_worker(	unsigned int n,
 					unsigned int k) {
 
-
+	/* Handle edge case of n = k */
+	if (n <= k) {
+		return;
+	}
 
 	// TODO: Implement this function
 
@@ -198,7 +201,20 @@ void nqueen_worker(	unsigned int n,
 	 *	}
 	 */
 
+	/* Receiving buffer */
+	std::vector<unsigned int> res_recv (n, 0);
 
+	while (true) {
+		/* Waiting for the next message from master */
+		MPI_Irecv(&res_recv[0], n, MPI_INT, MPI_ANY_SOURCE, 101, MPI_COMM_WORLD, &req);
+
+		/* Termination message */
+		if (res_recv[k] == 100) {
+			return;
+		}
+
+		actual_seq_solver(all_solns, res_recv, k, n);
+	}
 }
 
 
