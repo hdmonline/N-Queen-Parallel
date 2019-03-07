@@ -40,7 +40,7 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 						   unsigned int row,
 						   const unsigned int &n, 
 						   const unsigned int &k,
-						   const bool & had_sol) {
+						   bool & had_sol) {
 	
 	/* Base case */
 	if (row == k) {
@@ -65,8 +65,27 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 }
 
 /* Check if all workers are idle */
-bool check_workers_idle(const bool[] &flags, const int &n) {
-	return std::all_of(flags, flags + n, [](bool working) { return working == false; })
+bool check_workers_idle(std::vector<bool> &flags, const int &n) {
+	return std::all_of(flags.begin(), flags.end(), [](bool working) { return working == false; });
+}
+
+/* The solver for the workers */
+void worker_solver(std::vector<unsigned int> &curr_res, 
+				   unsigned int row, 
+				   const unsigned int &n) {
+	/* Base case */
+	if (row == n) {
+		MPI_Send(&curr_res[0], n, MPI_INT, 0, 101, MPI_COMM_WORLD);
+		return;
+	}
+
+	for (unsigned int col = 0; col < n; col++) {
+		if (isValid(curr_res, row, col)) {
+			curr_res[row] = col;
+			worker_solver(curr_res, row + 1, n);
+			curr_res[row] = 0;
+		}
+	}
 }
 
 /*************************** solver.h functions ************************/
@@ -119,7 +138,7 @@ void nqueen_master(unsigned int n,
 	
 
 	/* Working flags for workers, false -> idle, true -> working */
-	bool[num_workers] isWorking = {false};
+	std::vector<bool> isWorking (num_workers, false);
 
 	/******************* STEP 1: Send one partial solution to each worker ********************/
 	/* Find next partial solution for each worker, send them to the workers */
@@ -150,15 +169,21 @@ void nqueen_master(unsigned int n,
 		/* Wait for next available worker */
 		MPI_Wait(&req, &stat);
 		worker = stat.MPI_SOURCE;
-		isWorking[worker-1] = false;
 
-		/* Send new partial solution if exist. If all partial solutions are found, check if all workers are done. */
-		if (!found_all_partial_sol) {
-			res_send = partial_solution;
-			MPI_Send(&res_send[0], n, MPI_INT, src, 100, MPI_COMM_WORLD);
-			isWorking[worker-1] = true;
+		/* The worker has done the job */
+		if (res_recv[0] == n) {
+			isWorking[worker-1] = false;
+			/* Send new partial solution if exist. If all partial solutions are found, check if all workers are done. */
+			if (!found_all_partial_sol) {
+				res_send = partial_solution;
+				MPI_Send(&res_send[0], n, MPI_INT, worker, 100, MPI_COMM_WORLD);
+				isWorking[worker-1] = true;
+			} else {
+				all_work_done = check_workers_idle(isWorking, num_workers);
+			}
 		} else {
-			all_work_done = check_workers_idle(isWorking, num_workers);
+			/* Store the result */
+			all_solns.push_back(res_recv);
 		}
 	}
 
@@ -206,14 +231,19 @@ void nqueen_worker(	unsigned int n,
 
 	while (true) {
 		/* Waiting for the next message from master */
-		MPI_Irecv(&res_recv[0], n, MPI_INT, MPI_ANY_SOURCE, 101, MPI_COMM_WORLD, &req);
+		MPI_Recv(&res_recv[0], n, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 		/* Termination message */
 		if (res_recv[k] == 100) {
 			return;
 		}
 
-		actual_seq_solver(all_solns, res_recv, k, n);
+		/* Solve the partial problem */
+		worker_solver(res_recv, k, n);
+
+		/* Send the finish message */
+		res_recv[0] = n;
+		MPI_Send(&res_recv[0], n, MPI_INT, 0, 101, MPI_COMM_WORLD);
 	}
 }
 
