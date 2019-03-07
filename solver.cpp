@@ -40,8 +40,10 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 						   unsigned int row,
 						   const unsigned int &n, 
 						   const unsigned int &k,
-						   bool & had_sol) {
-	
+						   bool &had_sol) {
+	/* Debugging */
+	//std::cout << "row: " << row << std::endl;
+
 	/* Base case */
 	if (row == k) {
 		partial_solution = curr_res;
@@ -49,9 +51,14 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 		return true;
 	}
 
-	bool found_sol = false;
-	for (unsigned int col = row == k - 1 && had_sol ? curr_res[row] + 1 : curr_res[row]; col < n; col++) {
+	bool found_sol;
+	for (unsigned int col = (row == k - 1 && had_sol ? curr_res[row] + 1 : curr_res[row]); col < n; col++) {
+		/* Debugging */
+		std::cout << row << col << std::endl;
+
 		if (isValid(curr_res, row, col)) {
+			/* Debugging */
+			std::cout << "yes" << std::endl;
 			curr_res[row] = col;
 			found_sol = next_partial_solution(partial_solution, curr_res, row + 1, n, k, had_sol);
 			if (found_sol) {
@@ -61,6 +68,8 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 		}
 	}
 
+	curr_res[row] = 0;
+	//had_sol = false;
 	return false;
 }
 
@@ -99,10 +108,6 @@ void seq_solver(unsigned int n, std::vector<std::vector<unsigned int>> &all_soln
 	/* Start actual solver */
 	actual_seq_solver(all_solns, curr_res, 0, n);
 }
-
-
-
-
 
 
 void nqueen_master(unsigned int n,
@@ -202,36 +207,22 @@ void nqueen_worker(	unsigned int n,
 	if (n <= k) {
 		return;
 	}
-
-	// TODO: Implement this function
-
-	// Following is a general high level layout that you can follow (you are not obligated to design your solution in this manner. This is provided just for your ease).
-
-	/*******************************************************************
-	 *
-	 * while() {
-	 *
-	 * 		wait for a message from master
-	 *
-	 * 		if (message is a partial job) {
-	 *				- finish the partial solution
-	 *				- send all found solutions to master
-	 * 		}
-	 *
-	 * 		if (message is a kill signal) {
-	 *
-	 * 				quit
-	 *
-	 * 		}
-	 *	}
-	 */
-
+	int proc_id; // number of processors
+	MPI_Comm_rank(MPI_COMM_WORLD, &proc_id);
 	/* Receiving buffer */
 	std::vector<unsigned int> res_recv (n, 0);
 
 	while (true) {
 		/* Waiting for the next message from master */
 		MPI_Recv(&res_recv[0], n, MPI_INT, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+		/* Debugging */
+		/*std::cout << "Received partial solution, id: " << proc_id << std::endl;
+		for (int i = 0; i < n; i++) {
+			std::cout << res_recv[i] << ' ';
+		}
+		std::cout << std::endl;*/
+
 
 		/* Termination message */
 		if (res_recv[k] == 100) {
