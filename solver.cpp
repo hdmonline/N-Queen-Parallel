@@ -35,7 +35,7 @@ void actual_seq_solver(std::vector<std::vector<unsigned int>> &all_solns,
 }
 
 /* Calculate the next partial solution with k queens */
-bool next_partial_solution(std::queue<std::vector<unsigned int>> &partial_solutions, 
+bool next_partial_solution(std::vector<unsigned int> &partial_solution, 
 						   std::vector<unsigned int> &curr_res, 
 						   unsigned int row,
 						   const unsigned int &n, 
@@ -44,7 +44,7 @@ bool next_partial_solution(std::queue<std::vector<unsigned int>> &partial_soluti
 	
 	/* Base case */
 	if (row == k) {
-		partial_solutions.push(curr_res);
+		partial_solution = curr_res;
 		had_sol = true;
 		return true;
 	}
@@ -53,7 +53,7 @@ bool next_partial_solution(std::queue<std::vector<unsigned int>> &partial_soluti
 	for (unsigned int col = row == k - 1 && had_sol ? curr_res[row] + 1 : curr_res[row]; col < n; col++) {
 		if (isValid(curr_res, row, col)) {
 			curr_res[row] = col;
-			found_sol = next_partial_solution(partial_solutions, curr_res, row + 1, n, k, had_sol);
+			found_sol = next_partial_solution(partial_solution, curr_res, row + 1, n, k, had_sol);
 			if (found_sol) {
 				return true;
 			}
@@ -123,29 +123,39 @@ void nqueen_master(unsigned int n,
 	int num_procs;
 	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 	MPI_Status stat;
+	MPI_Request req;
 
 	/* Create current result */
 	std::vector<unsigned int> curr_res (n, 0);
-	std::queue<std::vector<unsigned int>> partial_solutions;
+	std::vector<unsigned int> partial_solution (k, 0);
 	std::vector<unsigned int> res_send (n, 0);
 	std::vector<unsigned int> res_recv (n, 0);
-	bool had_sol = false;
+	bool had_sol = false, found_sol = false, found_all_sol = false, all_work_done = false;
+	int src;
 
 	/******************* STEP 1: Send one partial solution to each worker ********************/
 	/* Find next partial solution for each worker, send them to the workers */
 	for (int w = 0; w < num_procs; w++) {
 		/* Find next partial solution */
-		next_partial_solution(partial_solutions, curr_res, 0, n, k, had_sol);
+		found_sol = next_partial_solution(partial_solution, curr_res, 0, n, k, had_sol);
 
 		/* Send the solution to the worker */
-		res_send = partial_solutions.pop();
-		MPI_Send(&res_send[0], n, MPI_INT, w, 111, MPI_COMM_WORLD);
+		if (found_sol) {
+			res_send = partial_solution;
+			MPI_Send(&res_send[0], n, MPI_INT, w, 100, MPI_COMM_WORLD);
+		} else {
+			break;
+		}
 	}
 
 	/******************* STEP 2: Send partial solutions to workers as they respond ********************/
-	while (1) {
-		MPI_Recv(&recv_size, 1, MPI_INT, MPI_ANY_SOURCE, 110, MPI_COMM_WORLD, &stat);
-		MPI_
+	while (!found_all_sol && !all_work_done) {
+		MPI_Irecv(&res_recv[0], n, MPI_INT, MPI_ANY_SOURCE, 101, MPI_COMM_WORLD, &req);
+		found_sol = next_partial_solution(partial_solution, curr_res, 0, n, k, had_sol);
+		MPI_Wait(&req, &stat);
+		src = stat.MPI_SOURCE;
+		res_send = partial_solution;
+		MPI_Send(&res_send[0], n, MPI_INT, src, 100, MPI_COMM_WORLD);
 	}
 }
 
