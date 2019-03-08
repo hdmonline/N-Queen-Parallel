@@ -43,13 +43,13 @@ bool next_partial_solution(std::vector<unsigned int> &partial_solution,
 						   bool &had_sol) {
 
 	/* Handle edge case of k = 0 */
-	/*if (k == 0 && had_sol) {
+	if (k == 0 && had_sol) {
 		return false;
 	} else if (k == 0) {
 		partial_solution = curr_res;
 		had_sol = true;
 		return true;
-	}*/
+	}
 
 	/* Base case */
 	if (row == k) {
@@ -142,7 +142,7 @@ void nqueen_master(unsigned int n,
 	
 
 	/* Working flags for workers, false -> idle, true -> working */
-	std::vector<bool> is_working (num_workers, false);
+	std::vector<bool> working (num_workers, false);
 
 	/******************* STEP 1: Send one partial solution to each worker ********************/
 	/* Find next partial solution for each worker, send them to the workers */
@@ -150,7 +150,7 @@ void nqueen_master(unsigned int n,
 		/* Find next partial solution */
 		if (next_partial_solution(partial_solution, curr_res, 0, n, k, had_sol)) {
 			MPI_Send(&partial_solution[0], n, MPI_INT, w, 100, MPI_COMM_WORLD);
-			is_working[w-1] = true;
+			working[w-1] = true;
 		} else {
 			found_all_partial_sol = true; /* All the partial solutions have been found */
 			break;
@@ -183,13 +183,13 @@ void nqueen_master(unsigned int n,
 		}
 
 		/* Otherwise, The worker has done the job */
-		is_working[worker-1] = false;
+		working[worker-1] = false;
 		/* Send a new partial solution if exist. If all partial solutions are found, check if all workers are done. */
 		if (!found_all_partial_sol) {
 			MPI_Send(&partial_solution[0], n, MPI_INT, worker, 100, MPI_COMM_WORLD);
-			is_working[worker-1] = true;
+			working[worker-1] = true;
 		} else {
-			all_work_done = check_workers_idle(is_working, num_workers);
+			all_work_done = check_workers_idle(working, num_workers);
 		}
 	}
 
