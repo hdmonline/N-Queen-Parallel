@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p avg
 n=8
 k=5
 for p in 1 2 4
@@ -10,10 +11,8 @@ do
 	do
 		# mpirun -np $p ./nqueen $n $k
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
-		#sleep 2
-		a=`head -1 out\_$n\_$p\_$k.txt`
+		a=`head -2 out\_$n\_$p\_$k.txt`
 		sum=`expr $sum + $a`
-		echo $sum
 		((counter++))
 	done
 	sum=`expr $sum / 5`

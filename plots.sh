@@ -3,10 +3,10 @@
 # plot 1
 n=15
 k=5
-sum=0;
 for p in 1 2 4 6 8 10 12 14 16
 do
 	counter=1
+	sum=0;
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
