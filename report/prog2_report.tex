@@ -49,29 +49,62 @@ We use non-blocking \textbf{MPI\_Irecv} at the master processor side to receive 
 
 \section{Implementation and Analysis}
 \subsection{vary n with fixed p and k}
-\begin{enumerate}
-	\item $ p = , k =  $ \\
+	With fixed $ p = 8, k = 4 $, we varied the problem size $ n $ from 8 to 16. The runtime versus the problem size is shown below.
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{runVSn}
+		\caption{Runtime VS problem size}
+	\end{figure}
 	
-	\item  $ p =  , k =  $ \\
-\end{enumerate}
-
 \subsection{vary p with fixed n and k}
-\begin{enumerate}
-	\item $ n = , k =  $ \\
-	
-	\item  $ n =  , k =  $ \\
-\end{enumerate}
+	With fixed  $ n = 15, k = 5 $, we varied the number of processors from 1 to 16. The running time versus the number of processors is shown in Figure 1. \\
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.6\textwidth]{pVSTime1}
+		\caption{Running time VS number of processors}
+	\end{figure}
+    The speedup and efficiency versus the number of processors are shown in Figure 2 and Figure 3 respectively.
+    \begin{figure}[H]
+    	\centering
+    	\includegraphics[width=0.6\textwidth]{speedupVSp}
+    	\caption{Speedup VS number of processors}
+    \end{figure}
+   
+    \begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{effiVSp}
+	\caption{Efficiency VS number of processors}
+    \end{figure}
+
 
 \subsection{vary k with fixed n and p}
-\begin{enumerate}
-	\item $ n = , p =  $ \\
-	
-	\item  $ n =  , p =  $ \\
-\end{enumerate}
+    With fixed $ n = 16, p = 8 $, we varied the problem size of subproblem initialized by the master from 1 to 16. The runtime versus the number of partial solution size is shown in Figure 5.
+	\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{runVSk}
+	\caption{Runtime VS partial solution size}
+    \end{figure}
 
 \subsection{largest n with  p = 16 }
-
-
+\begin{center}
+	\begin{tabular}{ |c| c |c|}
+		\hline
+		n & k & runtime [sec] \\
+		\hline
+		18 & 3 & 881.989 \\
+		\hline
+		18 & 4 & 891.974 \\
+		\hline
+		18 & 5 & 875.629 \\
+		\hline
+		18 & 6 & 928.418 \\
+		\hline
+		18 & 7 & 953.889 \\
+		\hline
+		
+	\end{tabular}	
+\end{center}
+In the limit of 30 minutes, the largest $ n $ we can solve is 18. We solve it with different $ k $ values and found that $ k = 5 $ gives the smallest running time.
 
 \section{Results and Conclusion}
 For this programming assignment, we implemented parallel backtracking algorithm for the n-queens problem. We enhanced the understanding of scalability, communication time and computing time of parallel computing and MPI implementation. We also got some interesting findings as discussed in the above analysis section. 
