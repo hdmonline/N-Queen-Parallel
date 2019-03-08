@@ -1,16 +1,21 @@
 #!/bin/bash
-
+mkdir -p avg
 # plot 1
 n=15
 k=5
-for i in 1 2 4 6 8 10 12 14 16
+for p in 1 2 4 6 8 10 12 14 16
 do
 	counter=1
+	sum=0;
 	while [ $counter -le 5 ]
 	do
-		qsub -v p=$i,n=$n,k=$k pbs_script.pbs
+		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 1-1 done
 
@@ -22,8 +27,12 @@ do
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 1-2 done
 
@@ -36,8 +45,12 @@ do
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 2-1 done
 
@@ -49,8 +62,12 @@ do
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 2-2 done
 
@@ -63,8 +80,12 @@ do
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 3-2 done
 
@@ -76,7 +97,11 @@ do
 	while [ $counter -le 5 ]
 	do
 		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
+		sum=`expr $sum + $a`
 		((counter++))
 	done
+	sum=`expr $sum / 5`
+	echo for $n $p $k, average = $sum > avg\_$n\_$p\_$k.txt
 done
 echo plot 3-2 done
