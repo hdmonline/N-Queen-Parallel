@@ -8,7 +8,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[vlined, ruled, boxed]{algorithm2e}
 \title{Programming Assignment 2}
-\author{Han Dongmin, Yuanlai Zhou and Chong Ye}
+\author{Dongmin Han, Yuanlai Zhou and Chong Ye}
 
 \begin{document}
 
@@ -49,41 +49,46 @@ We use non-blocking \textbf{MPI\_Irecv} at the master processor side to receive 
 
 \section{Implementation and Analysis}
 \subsection{vary n with fixed p and k}
-	With fixed $ p = 8, k = 4 $, we varied the problem size $ n $ from 8 to 16. The runtime versus the problem size is shown below.
+	With fixed $ p = 8, k = 4 $, we varied the problem size $ n $ from 8 to 16. The runtime versus the problem size is shown in Figure 1. When $ n $ is small, the running time is not much different. When $ n > 14 $, the running time increases significantly with problem size.
 	\begin{figure}[H]
-		\centering
+		\begin{centering}
 		\includegraphics[width=0.6\textwidth]{runVSn}
 		\caption{Runtime VS problem size}
+	\end{centering}
 	\end{figure}
 	
 \subsection{vary p with fixed n and k}
-	With fixed  $ n = 15, k = 5 $, we varied the number of processors from 1 to 16. The running time versus the number of processors is shown in Figure 1. \\
+	With fixed  $ n = 15, k = 5 $, we varied the number of processors from 1 to 16. The running time versus the number of processors is shown in Figure 2. The speedup and efficiency versus the number of processors are shown in Figure 3 and Figure 4 respectively. It can been seen that, the runtime and speedup decreases with increasing processors. However, the efficiency does not change much with number of processors.
 	\begin{figure}[H]
-		\centering
+		\begin{centering}
 		\includegraphics[width=0.6\textwidth]{pVSTime1}
 		\caption{Running time VS number of processors}
+		\end{centering}
 	\end{figure}
-    The speedup and efficiency versus the number of processors are shown in Figure 2 and Figure 3 respectively.
     \begin{figure}[H]
-    	\centering
+    	\begin{centering}
     	\includegraphics[width=0.6\textwidth]{speedupVSp}
     	\caption{Speedup VS number of processors}
+    	\end{centering}
     \end{figure}
    
     \begin{figure}[H]
-	\centering
+	\begin{centering}
 	\includegraphics[width=0.6\textwidth]{effiVSp}
 	\caption{Efficiency VS number of processors}
+	\end{centering}
     \end{figure}
-
 
 \subsection{vary k with fixed n and p}
-    With fixed $ n = 16, p = 8 $, we varied the problem size of subproblem initialized by the master from 1 to 16. The runtime versus the number of partial solution size is shown in Figure 5.
+    With fixed $ n = 16, p = 8 $, we varied the problem size of subproblem initialized by the master from 1 to 16. The runtime versus the number of partial solution size is shown in Figure 5. For $ k < 8 $, there is not much difference in the running time. However, when $ k > 10 $, the runtime increases with increasing $ k $. This means, when master processor is required to do more work, thus the runtime increases. When $ k = n $, the parallel computing becomes sequential computing.\\
+    When $ k = \frac{n}{4} $, the runtime is minimum. Thus we use $ k = \frac{n}{4} $ to obtain the maximum problem size we can solve in 30 minutes, which is shown in the next subsection.
 	\begin{figure}[H]
-	\centering
+	\begin{centering}
 	\includegraphics[width=0.6\textwidth]{runVSk}
 	\caption{Runtime VS partial solution size}
+	\end{centering}
     \end{figure}
+
 
 \subsection{largest n with  p = 16 }
 \begin{center}
