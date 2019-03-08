@@ -13,40 +13,38 @@
 \begin{document}
 
 \maketitle
-
-\section{Preamble}
-For question 3, I discussed with Dongmin Han and Yuanlai Zhou and we worked together to figure out the parallel solution. 
-
-
+\section{Problem Statement}
+In this programming assignment, we need to develop a parallel back-tracking algorithm to place n-queens on a $ n * n $ chessboard according to rules. Queens are not allowed to be placed in the same rows/columns or diagonal directions. Both sequential and parallel algorithms need to be designed to find all the correct configurations of the placement. One solution to the problem are represented by an array of $ n $ numbers, $ sol[0,1,2,...,n-1] $, where $ sol[i] $ represents the column where the queen in row $ i $ is placed.
 \section{Algorithm}
+
+
+\subsection{seq\_solver}
+We implemented recursive back-tracking algorithm in the sequential calculation. There are two helper functions used in here, \textit{isValid} and \textit{actual\_seq\_solver}.\\
+Function \textit{isValid} determines if the current placement would threaten the queens already placed. Specifically, if we are planning to place the queen of row $ i $ in column $ j $, we need to check if the queen will threaten the queens of row $ 0,1,2,...,i-2 $ which are already placed. If not, the function would return \textit{true}. otherwise, return \textit{false}. \\
+Function \textit{actual\_seq\_solver} implements the back-tracking algorithm to place the n-queens.The queens are placed row by row, after placing the queen of row $ i $, the function proceeds to place the queen of row $ i+1 $. After a solution is found, the function proceeds to find another feasible placement until all the correct configurations are found. 
+
+\subsection{nqueen\_master}
+Master processor (rank 0) implements backtracking to calculate the first $ k $ queens' positions, and sends out the tasks of solving the remaining solutions to this sub-problem $ S_k $ to the workers. The master dispatches one task at a time to available workers. While waiting for the responses from workers, master prepares the next feasible configuration of placing the first $ k $ queens for efficiency. After the worker finishes its work, master dispatches another partial solution to this available worker till all the partial solutions are found. After all the partial solutions are found and all the workers finish their jobs, master sends out the termination signal to terminate the parallel running.\\
+Two main helper functions are defined here, $ next\_partial\_solution $ and $ check\_worker\_idle $. The helper function $ next\_partial\_solution $ is used to find the next partial solutions by backtracking algorithm, if a partial solution is found, returns \textit{true}. Then the partial solution would be dispatched to the available worker. The function returns \textit{false} after all the partial solutions are found. The function $ check\_worker\_idle $ returns true if all the workers have finished the jobs. Then the master sends out the termination signal to terminate the parallel running.
+
+\subsubsection{nqueen\_worker}
+Workers receive two kinds signals from the master, one is partial solution of placing the first $ k $ queens, the other is the termination signal. If the received signal is partial solution, then the worker needs to finish placing the remaining $ n-k $ queens. The helper function $ worker\_solver $ is defined to find the remaining solutions to the subproblem. The $ worker\_solver $ continues to place the queen of row $ k $ to row $ n-1 $. As soon as one solution is found, the worker sends out the solution to master and then checks if there are other solutions. If all the remaining solutions are found the the subproblem, the worker sends out job finished signal to master and waits for another job. \\
+If the work receives termination signal from master, the function would just return.
+
+\section{Optimization}
+\subsection{edge cases}
 \begin{enumerate}
-\item
-\textbf{seq\_solve}r
-\begin{enumerate}
-	\item $ op(a,b)=2a+b $ \\
-	since \[ op(op(a,b),c)=2(2a+b)+c=4a+2b+c \]
-	\[ op(a,op(b,c))=2a+(2b+c)=2a+2b+c \]
-	\[ \Rightarrow op(op(a,b),c) \neq op(a,op(b,c)) \]
-	Thus $ op(a,b)=2a+b $ is not associative operation.Therefore, parallel prefix algorithm cannot be used in this binary operation.
-	\item $ op(a,b)=\sqrt{a^2+b^2} $\\
-	Since
-	\[ op(op(a,b),c)=\sqrt{(\sqrt{a^2+b^2})^2+c^2}=\sqrt{a^2+b^2+c^2} \]
-	\[ op(a,op(b,c))=\sqrt{a^2+(\sqrt{b^2+c^2})^2}=\sqrt{a^2+b^2+c^2} \]
-	\[ \Rightarrow op(op(a,b),c)= op(a,op(b,c))\]
-	Thus $ op(a,b)=\sqrt{a^2+b^2} $ is associative operation.Therefore, parallel prefix algorithm can be used in this binary operation.
+	\item $ p = 1 $ \\
+	When we only use one processor, it means sequential computing. 
+	\item $ k = n $ \\
+	It means the master processor calculates the solutions of placing $ n $ queens, which simply represents the full solutions. Thus we use sequential algorithm for this case.	
+	\item $ k = 0 $ \\
+		
 \end{enumerate}
 
-\setlength{\parindent}{1em}
-\item \textbf{nqueen\_master}
+\subsection{computation-communication overlap}
+We use non-blocking \textbf{MPI\_Irecv} at the master processor side to receive the responses from workers. In this case, the master processor could prepare the next partial solution and have it ready while waiting for the response from workers. As soon as the worker returns solutions and is available, the master hands out the prepared partial solution to the worker, saving the worker's idle waiting time. 
 
-
-\vspace{3mm}
-
-\item \textbf{nqueen\_worker} \\
-
-\end{enumerate}
-
-\section{optimization}
 
 \section{Implementation and Analysis}
 \begin{enumerate}
