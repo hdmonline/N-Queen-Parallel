@@ -8,7 +8,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage[vlined, ruled, boxed]{algorithm2e}
 \title{Programming Assignment 2}
-\author{Han Dongmin, Yuanlai Zhou, Chong Ye}
+\author{Han Dongmin, Yuanlai Zhou and Chong Ye}
 
 \begin{document}
 
@@ -39,6 +39,7 @@ If the work receives termination signal from master, the function would just ret
 	\item $ k = n $ \\
 	It means the master processor calculates the solutions of placing $ n $ queens, which simply represents the full solutions. Thus we use sequential algorithm for this case.	
 	\item $ k = 0 $ \\
+	It means the master does not need to place any queens, thus the workers need to place the queens of row $ 0 $ to row $ n-1 $.
 		
 \end{enumerate}
 
@@ -47,15 +48,33 @@ We use non-blocking \textbf{MPI\_Irecv} at the master processor side to receive 
 
 
 \section{Implementation and Analysis}
+\subsection{vary n with fixed p and k}
 \begin{enumerate}
-\item vary n
-choose  k $ \geq 8 $
-\item vary p
-n not too low or too high
-\item vary k
-$ n>10 $
+	\item $ p = , k =  $ \\
+	
+	\item  $ p =  , k =  $ \\
 \end{enumerate}
 
-\section{Results and Conclustion}
+\subsection{vary p with fixed n and k}
+\begin{enumerate}
+	\item $ n = , k =  $ \\
+	
+	\item  $ n =  , k =  $ \\
+\end{enumerate}
+
+\subsection{vary k with fixed n and p}
+\begin{enumerate}
+	\item $ n = , p =  $ \\
+	
+	\item  $ n =  , p =  $ \\
+\end{enumerate}
+
+\subsection{largest n with  p = 16 }
+
+
+
+\section{Results and Conclusion}
+For this programming assignment, we implemented parallel backtracking algorithm for the n-queens problem. We enhanced the understanding of scalability, communication time and computing time of parallel computing and MPI implementation. We also got some interesting findings as discussed in the above analysis section. 
+
      
 \end{document}
