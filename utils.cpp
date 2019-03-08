@@ -33,9 +33,10 @@ bool input_sanity_check(std::ostringstream& err_msg, int argc, char **argv) {
 void write_output(	std::ostream& os,
 					double time_elapsed,
 					std::vector<std::vector<unsigned int> >& all_solns) {
-
-	os << all_solns.size() << std::endl;
+	
 	os << time_elapsed << std::endl;
+	os << all_solns.size() << std::endl;
+	
 
 /*
     unsigned int nq = all_solns[0].size();
