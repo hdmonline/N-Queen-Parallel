@@ -35,6 +35,8 @@ void write_output(	std::ostream& os,
 					std::vector<std::vector<unsigned int> >& all_solns) {
 
 	os << all_solns.size() << std::endl;
+	os << time_elapsed << std::endl;
+
 /*
     unsigned int nq = all_solns[0].size();
 	for (unsigned int i=0; i < all_solns.size(); i++) {
