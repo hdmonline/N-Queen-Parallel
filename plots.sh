@@ -3,12 +3,14 @@
 # plot 1
 n=15
 k=5
-for i in 1 2 4 6 8 10 12 14 16
+sum=0;
+for p in 1 2 4 6 8 10 12 14 16
 do
 	counter=1
 	while [ $counter -le 5 ]
 	do
-		qsub -v p=$i,n=$n,k=$k pbs_script.pbs
+		qsub -v p=$p,n=$n,k=$k pbs_script.pbs
+		a=`head -2 out\_$n\_$p\_$k.txt`
 		((counter++))
 	done
 done
