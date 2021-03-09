@@ -1,6 +1,3 @@
-CX4220/CSE 6220 Programming Assignment 2
-=================================
-
 ## Code structure
 
 All the code is located at the root level of the project.
